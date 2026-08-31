@@ -1,0 +1,36 @@
+# 依赖
+node_modules/
+
+# 构建产物
+out/
+dist/
+dist2/
+*.blockmap
+latest.yml
+
+# 工具缓存
+.eb-cache/
+.electron-cache/
+.electron-builder-cache/
+.pg-client-tmp/
+
+# 密钥与环境配置（绝不入库）
+.env
+server/.env
+
+# 本地运行数据
+server/uploads/
+server/prisma/dev.db
+server/prisma/dev.db-journal
+userData/
+
+# 缓存与临时文件
+*.log
+e2e/screenshots/
+pcdouyin-server-deploy.tar.gz
+_serve.cjs
+.trae/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db

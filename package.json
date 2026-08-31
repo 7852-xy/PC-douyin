@@ -1,0 +1,40 @@
+{
+  "name": "pc-douyin",
+  "version": "0.2.1",
+  "description": "PC 桌面版短视频平台（类抖音）",
+  "author": "",
+  "license": "MIT",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "dist": "electron-vite build && electron-builder --win",
+    "server": "npm --prefix server run dev",
+    "seed": "npm --prefix server run seed",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "node e2e/packaged.mjs"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "framer-motion": "^11.18.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^4.5.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.5.4",
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^2.3.0",
+    "playwright-core": "^1.62.1",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21"
+  }
+}

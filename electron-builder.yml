@@ -1,0 +1,19 @@
+appId: com.pc.douyin
+productName: PCDouyin
+electronDist: node_modules/electron/dist
+directories:
+  output: dist2
+files:
+  - out/**
+win:
+  target: nsis
+# 自动更新源：generic 静态服务器。发布时把 latest.yml + exe 放到该目录即可被客户端拉取。
+# 换更新服务器只改这里的 url。本地未部署更新源时，客户端检查会静默失败（不影响使用）。
+publish:
+  - provider: generic
+    url: https://pcdouyin-updates.example.com/
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  shortcutName: PCDouyin

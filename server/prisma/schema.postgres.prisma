@@ -1,0 +1,148 @@
+// 生产 schema：Postgres。逐字镜像 schema.prisma 的全部 model，
+// 仅 datasource 切 postgresql + url 走 env("DATABASE_URL")。
+// 部署流程：设 DATABASE_URL → db:generate:pg（重生成 postgres 客户端）→ db:migrate:pg → seed。
+// 风险：Prisma 把 provider 烘进客户端；dev 用 sqlite schema generate、prod 用本 schema generate，切环境须重跑 generate。
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  nickname     String        @unique
+  passwordHash String
+  createdAt    DateTime      @default(now())
+  videos       Video[]
+  likes        Like[]
+  collects     Collect[]
+  comments     Comment[]
+  commentLikes CommentLike[]
+  // 关注关系：following = 我关注的人；followers = 关注我的人
+  following  Follow[] @relation("follower")
+  followers  Follow[] @relation("followee")
+  // 通知：我作为 actor 触发的、我作为 recipient 收到的
+  notifsSent       Notification[] @relation("notifActor")
+  notifsReceived   Notification[] @relation("notifRecipient")
+  refreshTokens    RefreshToken[]
+  // 私信
+  dmSent     Message[] @relation("dmSent")
+  dmReceived Message[] @relation("dmReceived")
+}
+
+model Video {
+  id          String    @id @default(cuid())
+  title       String
+  description String    @default("")
+  filename    String
+  cover       String    @default("")
+  music       String    @default("原创")
+  duration    Int       @default(0)
+  shares      Int       @default(0)
+  author      User      @relation(fields: [authorId], references: [id])
+  authorId    String
+  createdAt   DateTime  @default(now())
+  likes       Like[]
+  collects   Collect[]
+  comments    Comment[]
+  notifs      Notification[]
+}
+
+model Like {
+  userId  String
+  videoId String
+  user    User  @relation(fields: [userId], references: [id])
+  video   Video @relation(fields: [videoId], references: [id])
+
+  @@id([userId, videoId])
+}
+
+model Collect {
+  userId  String
+  videoId String
+  user    User  @relation(fields: [userId], references: [id])
+  video   Video @relation(fields: [videoId], references: [id])
+
+  @@id([userId, videoId])
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  content   String
+  video     Video         @relation(fields: [videoId], references: [id])
+  videoId   String
+  author    User          @relation(fields: [authorId], references: [id])
+  authorId  String
+  createdAt DateTime      @default(now())
+  likes     CommentLike[]
+  notifs    Notification[]
+}
+
+model CommentLike {
+  userId    String
+  commentId String
+  user      User    @relation(fields: [userId], references: [id])
+  comment   Comment @relation(fields: [commentId], references: [id])
+
+  @@id([userId, commentId])
+}
+
+// 关注关系：followerId 关注 followeeId
+model Follow {
+  followerId String
+  followeeId String
+  follower   User   @relation("follower", fields: [followerId], references: [id])
+  followee   User   @relation("followee", fields: [followeeId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@id([followerId, followeeId])
+}
+
+// 通知：actor 对 recipient 做了 type 动作（点赞/评论/关注/评论被赞）
+model Notification {
+  id         String   @id @default(cuid())
+  type       String   // 'like' | 'comment' | 'follow' | 'comment_like'
+  actor      User     @relation("notifActor", fields: [actorId], references: [id])
+  actorId    String
+  recipient  User     @relation("notifRecipient", fields: [recipientId], references: [id])
+  recipientId String
+  video      Video?  @relation(fields: [videoId], references: [id])
+  videoId    String?
+  comment    Comment? @relation(fields: [commentId], references: [id])
+  commentId  String?
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+// refresh token：access/refresh 轮换 + 黑名单。存 sha256 hash，轮换时撤销旧、签新；
+// logout 撤销 refresh + 把当前 access 的 jti 加黑名单。refresh 关闭时本表不用。
+model RefreshToken {
+  id         String    @id @default(cuid())
+  userId     String
+  tokenHash  String
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+// 私信：1:1 消息；readAt 为空即未读
+model Message {
+  id          String    @id @default(cuid())
+  content     String
+  sender      User      @relation("dmSent", fields: [senderId], references: [id])
+  senderId    String
+  recipient   User      @relation("dmReceived", fields: [recipientId], references: [id])
+  recipientId String
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([senderId, recipientId])
+  @@index([recipientId, readAt])
+}
